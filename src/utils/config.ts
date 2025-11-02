@@ -36,7 +36,7 @@ export class ConfigManager {
     } catch {
       // 如果读取失败，使用默认配置
     }
-    
+
     return { ...DEFAULT_CONFIG };
   }
 

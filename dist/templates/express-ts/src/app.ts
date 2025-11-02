@@ -23,7 +23,7 @@ app.get('/', (req: Request, res: Response) => {
     message: '🚀 欢迎使用棱镜团队CLI创建的Express TypeScript项目！',
     project: '{{projectName}}',
     version: '0.1.0',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -31,7 +31,7 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'OK',
     uptime: process.uptime(),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -39,7 +39,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.get('/api/users', (req: Request, res: Response) => {
   const users = [
     { id: 1, name: '张三', email: 'zhangsan@example.com' },
-    { id: 2, name: '李四', email: 'lisi@example.com' }
+    { id: 2, name: '李四', email: 'lisi@example.com' },
   ];
   res.json(users);
 });
@@ -49,7 +49,8 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({
     error: '服务器内部错误',
-    message: process.env.NODE_ENV === 'development' ? err.message : '请稍后重试'
+    message:
+      process.env.NODE_ENV === 'development' ? err.message : '请稍后重试',
   });
 });
 
@@ -57,7 +58,7 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 app.use('*', (req: Request, res: Response) => {
   res.status(404).json({
     error: '路由未找到',
-    path: req.originalUrl
+    path: req.originalUrl,
   });
 });
 

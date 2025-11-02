@@ -12,7 +12,7 @@ export const templateCommand = new Command('template')
   .action(async () => {
     try {
       logger.title('📋 模板管理');
-      
+
       const choices = [
         { name: '查看可用模板', value: 'list' },
         { name: '查看模板详情', value: 'info' },
@@ -40,21 +40,25 @@ export const templateCommand = new Command('template')
           break;
       }
     } catch (error) {
-      logger.error('模板操作失败:', error instanceof Error ? error : String(error));
+      logger.error(
+        '模板操作失败:',
+        error instanceof Error ? error : String(error)
+      );
     }
   });
 
 async function listTemplates(): Promise<void> {
   const templatesPath = path.join(__dirname, '..', 'templates');
-  
+
   if (!fs.existsSync(templatesPath)) {
     logger.error('模板目录不存在');
     return;
   }
 
-  const templates = fs.readdirSync(templatesPath, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory() && dirent.name !== 'common')
-    .map(dirent => dirent.name);
+  const templates = fs
+    .readdirSync(templatesPath, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory() && dirent.name !== 'common')
+    .map((dirent) => dirent.name);
 
   if (templates.length === 0) {
     logger.warn('没有找到可用的模板');
@@ -62,10 +66,10 @@ async function listTemplates(): Promise<void> {
   }
 
   logger.info('\n可用模板:');
-  templates.forEach(template => {
+  templates.forEach((template) => {
     const templatePath = path.join(templatesPath, template);
     const packageJsonPath = path.join(templatePath, 'package.json');
-    
+
     let description = '';
     if (fs.existsSync(packageJsonPath)) {
       try {
@@ -75,16 +79,19 @@ async function listTemplates(): Promise<void> {
         // 忽略错误
       }
     }
-    
-    logger.info(`  ${chalk.cyan(template)} ${description ? `- ${description}` : ''}`);
+
+    logger.info(
+      `  ${chalk.cyan(template)} ${description ? `- ${description}` : ''}`
+    );
   });
 }
 
 async function showTemplateInfo(): Promise<void> {
   const templatesPath = path.join(__dirname, '..', 'templates');
-  const templates = fs.readdirSync(templatesPath, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory() && dirent.name !== 'common')
-    .map(dirent => dirent.name);
+  const templates = fs
+    .readdirSync(templatesPath, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory() && dirent.name !== 'common')
+    .map((dirent) => dirent.name);
 
   if (templates.length === 0) {
     logger.warn('没有找到可用的模板');
@@ -111,19 +118,21 @@ async function showTemplateInfo(): Promise<void> {
       const packageJson = fs.readJsonSync(packageJsonPath);
       logger.info(`描述: ${packageJson.description || '无'}`);
       logger.info(`版本: ${packageJson.version || '无'}`);
-      
+
       if (packageJson.dependencies) {
         logger.info('\n依赖:');
         Object.entries(packageJson.dependencies).forEach(([name, version]) => {
           logger.info(`  ${name}: ${version}`);
         });
       }
-      
+
       if (packageJson.devDependencies) {
         logger.info('\n开发依赖:');
-        Object.entries(packageJson.devDependencies).forEach(([name, version]) => {
-          logger.info(`  ${name}: ${version}`);
-        });
+        Object.entries(packageJson.devDependencies).forEach(
+          ([name, version]) => {
+            logger.info(`  ${name}: ${version}`);
+          }
+        );
       }
     } catch {
       logger.error('读取package.json失败');
@@ -137,16 +146,17 @@ async function showTemplateInfo(): Promise<void> {
 
 async function validateTemplates(): Promise<void> {
   const templatesPath = path.join(__dirname, '..', 'templates');
-  const templates = fs.readdirSync(templatesPath, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory() && dirent.name !== 'common')
-    .map(dirent => dirent.name);
+  const templates = fs
+    .readdirSync(templatesPath, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory() && dirent.name !== 'common')
+    .map((dirent) => dirent.name);
 
   logger.info('\n验证模板...');
 
   for (const template of templates) {
     const templatePath = path.join(templatesPath, template);
     const isValid = await validateTemplate(templatePath);
-    
+
     if (isValid) {
       logger.success(`✓ ${template} - 有效`);
     } else {
@@ -159,7 +169,7 @@ async function validateTemplate(templatePath: string): Promise<boolean> {
   try {
     // 检查必需文件
     const requiredFiles = ['package.json'];
-    
+
     for (const file of requiredFiles) {
       const filePath = path.join(templatePath, file);
       if (!fs.existsSync(filePath)) {
@@ -171,7 +181,7 @@ async function validateTemplate(templatePath: string): Promise<boolean> {
     // 验证package.json
     const packageJsonPath = path.join(templatePath, 'package.json');
     const packageJson = fs.readJsonSync(packageJsonPath);
-    
+
     if (!packageJson.name || !packageJson.version) {
       logger.warn(`  package.json缺少必需字段`);
       return false;
@@ -179,7 +189,9 @@ async function validateTemplate(templatePath: string): Promise<boolean> {
 
     return true;
   } catch (error) {
-    logger.warn(`  验证失败: ${error instanceof Error ? error.message : String(error)}`);
+    logger.warn(
+      `  验证失败: ${error instanceof Error ? error.message : String(error)}`
+    );
     return false;
   }
 }
@@ -194,15 +206,15 @@ async function showDirectoryTree(
 
   try {
     const items = fs.readdirSync(dirPath, { withFileTypes: true });
-    
+
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       const isLast = i === items.length - 1;
       const currentPrefix = prefix + (isLast ? '└── ' : '├── ');
       const nextPrefix = prefix + (isLast ? '    ' : '│   ');
-      
+
       logger.info(`${currentPrefix}${item.name}`);
-      
+
       if (item.isDirectory() && depth < maxDepth) {
         const itemPath = path.join(dirPath, item.name);
         await showDirectoryTree(itemPath, nextPrefix, depth + 1, maxDepth);

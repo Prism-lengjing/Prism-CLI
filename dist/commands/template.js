@@ -84,15 +84,16 @@ async function listTemplates() {
         logger.error('模板目录不存在');
         return;
     }
-    const templates = fs.readdirSync(templatesPath, { withFileTypes: true })
-        .filter(dirent => dirent.isDirectory() && dirent.name !== 'common')
-        .map(dirent => dirent.name);
+    const templates = fs
+        .readdirSync(templatesPath, { withFileTypes: true })
+        .filter((dirent) => dirent.isDirectory() && dirent.name !== 'common')
+        .map((dirent) => dirent.name);
     if (templates.length === 0) {
         logger.warn('没有找到可用的模板');
         return;
     }
     logger.info('\n可用模板:');
-    templates.forEach(template => {
+    templates.forEach((template) => {
         const templatePath = path.join(templatesPath, template);
         const packageJsonPath = path.join(templatePath, 'package.json');
         let description = '';
@@ -110,9 +111,10 @@ async function listTemplates() {
 }
 async function showTemplateInfo() {
     const templatesPath = path.join(__dirname, '..', 'templates');
-    const templates = fs.readdirSync(templatesPath, { withFileTypes: true })
-        .filter(dirent => dirent.isDirectory() && dirent.name !== 'common')
-        .map(dirent => dirent.name);
+    const templates = fs
+        .readdirSync(templatesPath, { withFileTypes: true })
+        .filter((dirent) => dirent.isDirectory() && dirent.name !== 'common')
+        .map((dirent) => dirent.name);
     if (templates.length === 0) {
         logger.warn('没有找到可用的模板');
         return;
@@ -157,9 +159,10 @@ async function showTemplateInfo() {
 }
 async function validateTemplates() {
     const templatesPath = path.join(__dirname, '..', 'templates');
-    const templates = fs.readdirSync(templatesPath, { withFileTypes: true })
-        .filter(dirent => dirent.isDirectory() && dirent.name !== 'common')
-        .map(dirent => dirent.name);
+    const templates = fs
+        .readdirSync(templatesPath, { withFileTypes: true })
+        .filter((dirent) => dirent.isDirectory() && dirent.name !== 'common')
+        .map((dirent) => dirent.name);
     logger.info('\n验证模板...');
     for (const template of templates) {
         const templatePath = path.join(templatesPath, template);

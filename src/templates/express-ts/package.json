@@ -14,7 +14,11 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "type-check": "tsc --noEmit"
   },
-  "keywords": ["express", "typescript", "api"],
+  "keywords": [
+    "express",
+    "typescript",
+    "api"
+  ],
   "author": "{{author}}",
   "license": "MIT",
   "dependencies": {

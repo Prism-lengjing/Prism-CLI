@@ -47,17 +47,57 @@ const config_1 = require("../utils/config");
 const logger = new logger_1.Logger();
 const configManager = new config_1.ConfigManager();
 const TEMPLATES = [
-    { name: 'React + TypeScript', value: 'react-ts', description: '现代React应用，使用TypeScript和Vite' },
-    { name: 'Vue + TypeScript', value: 'vue-ts', description: 'Vue 3应用，使用TypeScript和Vite' },
-    { name: 'Node.js + TypeScript', value: 'node-ts', description: 'Node.js后端应用，使用TypeScript' },
-    { name: 'Express + TypeScript', value: 'express-ts', description: 'Express Web服务器，使用TypeScript' },
-    { name: 'Python', value: 'python', description: 'Python应用，包含基础项目结构' },
+    {
+        name: 'React + TypeScript',
+        value: 'react-ts',
+        description: '现代React应用，使用TypeScript和Vite',
+    },
+    {
+        name: 'Vue + TypeScript',
+        value: 'vue-ts',
+        description: 'Vue 3应用，使用TypeScript和Vite',
+    },
+    {
+        name: 'Node.js + TypeScript',
+        value: 'node-ts',
+        description: 'Node.js后端应用，使用TypeScript',
+    },
+    {
+        name: 'Express + TypeScript',
+        value: 'express-ts',
+        description: 'Express Web服务器，使用TypeScript',
+    },
+    {
+        name: 'Python',
+        value: 'python',
+        description: 'Python应用，包含基础项目结构',
+    },
 ];
 const PACKAGE_MANAGERS = [
-    { name: 'npm', value: 'npm', installCommand: 'npm install', runCommand: 'npm run' },
-    { name: 'yarn', value: 'yarn', installCommand: 'yarn install', runCommand: 'yarn' },
-    { name: 'pnpm', value: 'pnpm', installCommand: 'pnpm install', runCommand: 'pnpm' },
-    { name: 'bun', value: 'bun', installCommand: 'bun install', runCommand: 'bun run' },
+    {
+        name: 'npm',
+        value: 'npm',
+        installCommand: 'npm install',
+        runCommand: 'npm run',
+    },
+    {
+        name: 'yarn',
+        value: 'yarn',
+        installCommand: 'yarn install',
+        runCommand: 'yarn',
+    },
+    {
+        name: 'pnpm',
+        value: 'pnpm',
+        installCommand: 'pnpm install',
+        runCommand: 'pnpm',
+    },
+    {
+        name: 'bun',
+        value: 'bun',
+        installCommand: 'bun install',
+        runCommand: 'bun run',
+    },
 ];
 exports.initCommand = new commander_1.Command('init')
     .description('初始化新项目')
@@ -102,9 +142,9 @@ exports.initCommand = new commander_1.Command('init')
                     type: 'list',
                     name: 'template',
                     message: '选择项目模板:',
-                    choices: TEMPLATES.map(t => ({
+                    choices: TEMPLATES.map((t) => ({
                         name: `${t.name} - ${t.description}`,
-                        value: t.value
+                        value: t.value,
                     })),
                     default: configManager.getDefaultTemplate(),
                 },
@@ -180,7 +220,7 @@ async function copyTemplateFiles(projectPath, template) {
             // 排除某些文件
             const relativePath = path.relative(templatePath, src);
             return !relativePath.includes('node_modules');
-        }
+        },
     });
 }
 async function copyCommonFiles(projectPath, template, packageManager) {
@@ -193,7 +233,7 @@ async function copyCommonFiles(projectPath, template, packageManager) {
         '.gitignore',
         '.editorconfig',
         '.eslintrc.json',
-        '.prettierrc'
+        '.prettierrc',
     ];
     for (const file of commonFiles) {
         const srcPath = path.join(commonPath, file);
@@ -241,7 +281,7 @@ async function getFilesRecursively(dir) {
         const fullPath = path.join(dir, item);
         const stat = await fs.stat(fullPath);
         if (stat.isDirectory()) {
-            files.push(...await getFilesRecursively(fullPath));
+            files.push(...(await getFilesRecursively(fullPath)));
         }
         else {
             files.push(fullPath);
@@ -251,8 +291,23 @@ async function getFilesRecursively(dir) {
 }
 function isTextFile(filePath) {
     const textExtensions = [
-        '.js', '.ts', '.jsx', '.tsx', '.vue', '.py', '.json', '.md', '.txt',
-        '.html', '.css', '.scss', '.sass', '.less', '.yml', '.yaml', '.xml'
+        '.js',
+        '.ts',
+        '.jsx',
+        '.tsx',
+        '.vue',
+        '.py',
+        '.json',
+        '.md',
+        '.txt',
+        '.html',
+        '.css',
+        '.scss',
+        '.sass',
+        '.less',
+        '.yml',
+        '.yaml',
+        '.xml',
     ];
     const ext = path.extname(filePath).toLowerCase();
     return textExtensions.includes(ext);
@@ -268,7 +323,7 @@ function showNextSteps(projectName, packageManager, template) {
         logger.info('  python main.py');
     }
     else if (packageManager) {
-        const pm = PACKAGE_MANAGERS.find(p => p.value === packageManager);
+        const pm = PACKAGE_MANAGERS.find((p) => p.value === packageManager);
         if (pm) {
             logger.info(`  ${pm.installCommand}`);
             logger.info(`  ${pm.runCommand} dev`);

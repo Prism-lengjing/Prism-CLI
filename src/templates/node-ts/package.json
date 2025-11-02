@@ -14,7 +14,10 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "type-check": "tsc --noEmit"
   },
-  "keywords": ["nodejs", "typescript"],
+  "keywords": [
+    "nodejs",
+    "typescript"
+  ],
   "author": "{{author}}",
   "license": "MIT",
   "dependencies": {

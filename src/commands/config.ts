@@ -12,7 +12,7 @@ export const configCommand = new Command('config')
   .action(async () => {
     try {
       logger.title('⚙️  配置管理');
-      
+
       const choices = [
         { name: '查看当前配置', value: 'view' },
         { name: '设置默认模板', value: 'template' },
@@ -48,13 +48,16 @@ export const configCommand = new Command('config')
           break;
       }
     } catch (error) {
-      logger.error('配置操作失败:', error instanceof Error ? error : String(error));
+      logger.error(
+        '配置操作失败:',
+        error instanceof Error ? error : String(error)
+      );
     }
   });
 
 async function viewConfig(): Promise<void> {
   const config = configManager.getConfig();
-  
+
   logger.info('\n当前配置:');
   logger.info(`默认模板: ${chalk.cyan(config.defaultTemplate)}`);
   logger.info(`作者: ${chalk.cyan(config.project.author)}`);
