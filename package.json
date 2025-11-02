@@ -1,0 +1,72 @@
+{
+  "name": "@lengjing-prism/prism-cli",
+  "version": "1.0.0",
+  "description": "Prism team CLI: init projects, templates, lint, git workflow.",
+  "license": "MIT",
+  "author": "棱镜 Prism Team",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Prism-lengjing/Prism-CLI.git"
+  },
+  "keywords": [
+    "cli",
+    "prism",
+    "templates",
+    "lint",
+    "git",
+    "config"
+  ],
+  "type": "commonjs",
+  "packageManager": "pnpm@9.12.2",
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "prism": "dist/index.js"
+  },
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node scripts/build.js",
+    "dev": "nodemon --exec \"node scripts/build.js && node dist/index.js\"",
+    "lint": "eslint src --ext .ts --fix",
+    "lint:check": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.{ts,js,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json,md}\"",
+    "type-check": "tsc --noEmit",
+    "test": "node scripts/test.js",
+    "version": "pnpm run build && git add -A dist",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^14.0.2",
+    "fs-extra": "^11.3.2",
+    "glob": "^11.0.3",
+    "inquirer": "^12.10.0",
+    "ora": "^9.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^9.0.9",
+    "@types/node": "^24.9.2",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

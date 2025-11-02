@@ -1,0 +1,16 @@
+# Exclude dev and unused files
+src/
+node_modules/
+.vscode/
+.trae/
+.git/
+.gitignore
+.gitattributes
+.editorconfig
+pnpm-lock.yaml
+yarn.lock
+npm-debug.log*
+
+# Exclude templates if they are only examples (keep dist)
+**/*.map
+**/*.ts

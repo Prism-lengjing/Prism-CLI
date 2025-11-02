@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run linting
+        run: pnpm lint
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Test CLI installation
+        run: |
+          npm install -g .
+          prism --version
+          prism --help
+
+      - name: Test React template
+        run: |
+          mkdir -p test-output
+          cd test-output
+          prism init test-react -t react-ts -p npm -y
+          cd test-react
+          npm install
+          npm run build
+
+      - name: Test Vue template
+        run: |
+          cd test-output
+          prism init test-vue -t vue-ts -p npm -y
+          cd test-vue
+          npm install
+          npm run build
+
+      - name: Test Node.js template
+        run: |
+          cd test-output
+          prism init test-node -t node-ts -p npm -y
+          cd test-node
+          npm install
+          npm run build
+
+      - name: Test Express template
+        run: |
+          cd test-output
+          prism init test-express -t express-ts -p npm -y
+          cd test-express
+          npm install
+          npm run build
+
+  lint-and-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check code formatting
+        run: pnpm format:check
+
+      - name: Run linting
+        run: pnpm lint
+
+      - name: Check TypeScript types
+        run: pnpm type-check
