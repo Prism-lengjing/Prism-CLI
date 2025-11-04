@@ -166,7 +166,7 @@ async function validateTemplates() {
     logger.info('\n验证模板...');
     for (const template of templates) {
         const templatePath = path.join(templatesPath, template);
-        const isValid = await validateTemplate(templatePath);
+        const isValid = await validateTemplate(template, templatePath);
         if (isValid) {
             logger.success(`✓ ${template} - 有效`);
         }
@@ -175,10 +175,47 @@ async function validateTemplates() {
         }
     }
 }
-async function validateTemplate(templatePath) {
+// 每个模板需要包含的关键文件/路径
+const REQUIRED_FILES_BY_TEMPLATE = {
+    'react-ts': [
+        'package.json',
+        'index.html',
+        'tsconfig.json',
+        'tsconfig.node.json',
+        'vite.config.ts',
+        path.join('src', 'main.tsx'),
+        path.join('src', 'App.tsx'),
+        path.join('src', 'vite-env.d.ts'),
+    ],
+    'vue-ts': [
+        'package.json',
+        'index.html',
+        'tsconfig.json',
+        'tsconfig.node.json',
+        'vite.config.ts',
+        path.join('src', 'main.ts'),
+        path.join('src', 'App.vue'),
+        path.join('src', 'vite-env.d.ts'),
+    ],
+    'node-ts': [
+        'package.json',
+        path.join('src', 'index.ts'),
+    ],
+    'express-ts': [
+        'package.json',
+        path.join('src', 'app.ts'),
+    ],
+    python: [
+        'requirements.txt',
+        path.join('src', 'main.py'),
+    ],
+};
+async function validateTemplate(templateName, templatePath) {
     try {
         // 检查必需文件
-        const requiredFiles = ['package.json'];
+        const requiredFiles = REQUIRED_FILES_BY_TEMPLATE[templateName] || [
+            'package.json',
+        ];
         for (const file of requiredFiles) {
             const filePath = path.join(templatePath, file);
             if (!fs.existsSync(filePath)) {
@@ -192,6 +229,17 @@ async function validateTemplate(templatePath) {
         if (!packageJson.name || !packageJson.version) {
             logger.warn(`  package.json缺少必需字段`);
             return false;
+        }
+        // 前端模板（react/vue）验证脚本命令
+        if (templateName === 'react-ts' || templateName === 'vue-ts') {
+            const scripts = packageJson.scripts || {};
+            const hasDev = typeof scripts.dev === 'string';
+            const hasBuild = typeof scripts.build === 'string';
+            const hasPreview = typeof scripts.preview === 'string';
+            if (!hasDev || !hasBuild || !hasPreview) {
+                logger.warn('  scripts 中缺少 dev/build/preview 命令');
+                return false;
+            }
         }
         return true;
     }

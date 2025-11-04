@@ -1,5 +1,20 @@
 # Prism-CLI
 
+新增特性与改进（本次更新）：
+
+- init 支持 `-i, --install` 自动安装依赖、`-g, --git` 初始化 Git 并提交。
+- 模板变量替换新增 `{{author}}` 与 `{{license}}`，来源于用户配置。
+- 模板验证加强：按模板校验关键文件（React/Vue/Node/Express/Python）。
+- Vue TypeScript 模板新增 `src/vite-env.d.ts`，完整提供 Vite 类型声明。
+
+示例：
+
+```
+prism init my-app -t vue-ts -p npm -i -g -y
+```
+
+执行后将自动安装依赖并完成 Git 初始化，项目目录下会生成简要的 README。
+
 棱镜团队 CLI（Prism-CLI）是一套提升团队开发效率的命令行工具，聚合了项目初始化、模板管理、代码规范检查（ESLint/Prettier）、Git 工作流辅助、以及全局配置管理等能力。
 
 - 快速初始化：交互式选择模板，一键生成工程骨架
@@ -49,11 +64,9 @@ prism --help
 
 ## 命令总览
 
-- `init` 初始化新项目
-- `lint` 代码规范检查与格式化
-- `git` Git 工作流辅助（`commit`/`branch`/`status`）
-- `template` 模板管理（`list`/`create`/`delete`/`info`/`set-default`）
-- `config` 配置管理（`list`/`set`/`reset`/`template-path`）
+- `init` 初始化新项目（支持 `-i/--install`、`-g/--git`）
+- `template` 模板管理（`list`/`info`/`validate`）
+- `config` 配置管理（查看/设置默认模板/设置作者/设置许可证/重置）
 
 ---
 
@@ -67,12 +80,15 @@ node dist/index.js init [options] [project-name]
 
 - 选项：
 - `-t, --template <template>` 指定模板（`react-ts`、`vue-ts`、`node-ts`、`express-ts`）
+- `-p, --package-manager <manager>` 指定包管理器（`npm`/`pnpm`/`yarn`/`bun`），默认自动检测
 - `-y, --yes` 使用默认配置与默认模板
+- `-i, --install` 创建后自动安装依赖（前端/Node 模板）
+- `-g, --git` 创建后自动 `git init` 并提交首个 commit
 
 - 行为说明：
 - 未提供项目名时会交互式询问并校验命名规则（字母、数字、`-`、`_`）
 - 未指定模板且未 `--yes` 时，会交互选择模板，默认值取自全局配置
-- 会创建工程目录、写入 `package.json`、生成基础文件与模板文件
+- 会创建工程目录、写入 `package.json`、生成基础文件与模板文件，并生成项目级 README
 
 - 示例：
 
@@ -83,101 +99,33 @@ node dist/index.js init
 # 指定项目名与模板
 node dist/index.js init my-app -t react-ts
 
+# 自动安装依赖并初始化 Git
+node dist/index.js init my-app -t vue-ts -i -g
+
 # 使用默认模板直接创建
 node dist/index.js init my-app -y
 ```
 
 ---
 
-## lint 代码检查与格式化
+## lint 代码检查与格式化（规划中）
 
-- 用法：
-
-```bash
-node dist/index.js lint [options]
-```
-
-- 选项：
-- `-f, --fix` 自动修复问题/格式
-- `-p, --path <path>` 指定检查路径（默认 `.`）
-- `--eslint-only` 仅运行 ESLint
-- `--prettier-only` 仅运行 Prettier
-
-- 行为说明：
-- 会检测是否存在 ESLint/Prettier 配置文件，若缺失将提示是否创建默认配置
-- 默认 ESLint 规则包含 `@typescript-eslint` 推荐规则；Prettier 使用常见风格设定
-
-- 示例：
-
-```bash
-# 检查当前目录并输出问题
-node dist/index.js lint
-
-# 自动修复并格式化
-node dist/index.js lint --fix
-
-# 仅运行 ESLint
-node dist/index.js lint --eslint-only
-
-# 指定子目录
-node dist/index.js lint -p src
-```
+该命令将在后续版本接入，包含 ESLint/Prettier 的一键检查与修复。
 
 ---
 
-## git 工作流辅助
+## git 工作流辅助（规划中）
 
-- 子命令：
-
-### commit 规范化提交
-
-- 选项：
-- `-m, --message <message>` 提交信息
-- `-a, --add-all` 提交前添加所有更改
-
-- 行为：非 `-m` 情况下进入交互模式，支持类型选择（`feat`/`fix`/`docs`/`style`/`refactor`/`perf`/`test`/`build`/`ci`/`chore`），可选 `scope`、`subject`、`body`、`breaking` 和 `issues`
-
-- 示例：
-
-```bash
-# 交互式提交
-node dist/index.js git commit
-
-# 快速提交所有更改
-node dist/index.js git commit -a -m "feat: 添加用户中心"
-```
-
-### branch 创建规范分支
-
-- 参数：`<branch-name>` 分支名
-- 选项：
-- `-t, --type <type>` 分支类型（默认 `feature`）
-- `-b, --base <base>` 基础分支（默认 `main`）
-
-- 示例：
-
-```bash
-node dist/index.js git branch user-auth -t feature -b main
-```
-
-### status 查看仓库状态
-
-```bash
-node dist/index.js git status
-```
-
-- 输出：当前分支、工作区文件变更摘要与最近 5 次提交
+该命令将在后续版本接入，包含规范化 `commit/branch/status` 等功能。
 
 ---
 
 ## template 模板管理
 
 - 子命令：
-- `list` 列出可用模板，并标注默认模板
-- `create <name>` 创建新模板（`-d, --description` 模板描述）
-- `delete <name>` 删除模板（交互确认）
-- `info <name>` 查看模板配置与文件统计
-- `set-default <name>` 设置默认模板
+- `list` 查看可用模板（react-ts/vue-ts/node-ts/express-ts/python）
+- `info` 查看指定模板的关键信息（脚本、关键文件）
+- `validate` 校验所有模板的关键文件是否齐全
 
 - 示例：
 
@@ -185,59 +133,32 @@ node dist/index.js git status
 # 列出模板
 node dist/index.js template list
 
-# 创建模板
-node dist/index.js template create admin -d "管理后台通用模板"
+# 查看模板信息（交互选择）
+node dist/index.js template info
 
-# 查看模板信息
-node dist/index.js template info admin
-
-# 设置默认模板
-node dist/index.js template set-default admin
-```
-
-- 模板目录：默认存放于 `~/.prism/templates`（由全局配置管理）
-- 每个模板包含 `template.json` 与模板文件夹，`template.json` 示例：
-
-```json
-{
-  "name": "admin",
-  "description": "管理后台通用模板",
-  "version": "1.0.0",
-  "created": "2025-01-01T00:00:00.000Z",
-  "files": []
-}
+# 校验模板完整性
+node dist/index.js template validate
 ```
 
 ---
 
 ## config 配置管理
 
-- 子命令：
-- `list` 显示当前配置
-- `set` 交互式设置配置项
-- `reset` 重置为默认配置（交互确认）
-- `template-path [path]` 设置或查看模板根路径
+- 交互操作（进入后选择对应功能）：
+- 查看当前配置
+- 设置默认模板（react-ts/vue-ts/node-ts/express-ts/python）
+- 设置作者信息
+- 设置许可证（MIT/Apache-2.0/GPL-3.0/ISC/BSD-3-Clause/Unlicense）
+- 重置配置
 
-- 默认配置结构（保存在 `~/.prism/config.json`）：
+- 默认配置结构（保存在用户主目录 `~/.prism-cli-config.json`）：
 
 ```json
 {
-  "version": "1.0.0",
-  "templatesPath": "~/.prism/templates",
   "defaultTemplate": "react-ts",
-  "git": {
-    "commitConvention": "conventional",
-    "branchPrefix": "feature"
-  },
-  "lint": {
-    "eslintConfig": "standard",
-    "prettierConfig": "default",
-    "autoFix": true
-  },
   "project": {
-    "author": "棱镜Prism",
-    "license": "MIT",
-    "repository": ""
+    "author": "Your Name",
+    "license": "MIT"
   }
 }
 ```
@@ -257,23 +178,20 @@ node dist/index.js --help
 ```
 
 - 代码规范：提交前使用 `node dist/index.js lint --fix` 保持风格统一
-- 提交信息：推荐遵循 Conventional Commits（可使用交互式 `git commit` 子命令）
+- 提交信息：推荐遵循 Conventional Commits
 
 ---
 
 ## 常见问题（FAQ）
 
-- Q：运行 `git` 子命令提示“当前目录不是 Git 仓库”？
-- A：先执行 `git init` 初始化仓库。
+- Q：如何选择包管理器？
+- A：未指定 `-p` 时将自动检测（优先 `pnpm`/`yarn`/`bun`，否则回退 `npm`）。
 
-- Q：`lint` 提示未找到配置文件？
-- A：将进入交互提示是否创建默认配置，选择“是”即可继续。
+- Q：项目初始化后是否自动安装依赖与初始化 Git？
+- A：使用 `-i` 自动安装依赖（前端/Node 模板），使用 `-g` 自动执行 `git init && git add -A && git commit -m "chore: init"`。
 
-- Q：模板路径在哪里？
-- A：默认在 `~/.prism/templates`，可用 `node dist/index.js config template-path` 查看或设置。
-
-- Q：如何使用 `pnpm` 管理依赖？
-- A：使用 `pnpm add <pkg>` / `pnpm remove <pkg>`，并保持 `pnpm-lock.yaml` 一致。
+- Q：模板关键文件校验失败如何处理？
+- A：使用 `node dist/index.js template validate` 查看缺少的文件并补齐。
 
 ---
 

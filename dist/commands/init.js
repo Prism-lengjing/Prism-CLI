@@ -44,6 +44,7 @@ const path = __importStar(require("path"));
 const chalk_1 = __importDefault(require("chalk"));
 const logger_1 = require("../utils/logger");
 const config_1 = require("../utils/config");
+const child_process_1 = require("child_process");
 const logger = new logger_1.Logger();
 const configManager = new config_1.ConfigManager();
 const TEMPLATES = [
@@ -105,6 +106,8 @@ exports.initCommand = new commander_1.Command('init')
     .option('-t, --template <template>', '使用指定模板')
     .option('-p, --package-manager <manager>', '指定包管理器 (npm, yarn, pnpm, bun)')
     .option('-y, --yes', '使用默认配置')
+    .option('-i, --install', '创建后自动安装依赖')
+    .option('-g, --git', '创建后初始化Git仓库并首个提交')
     .action(async (projectName, options) => {
     try {
         logger.title('🚀 初始化新项目');
@@ -156,6 +159,7 @@ exports.initCommand = new commander_1.Command('init')
         }
         // 选择包管理器
         let packageManager = options.packageManager;
+        const detectedPM = template !== 'python' ? detectPackageManager() : undefined;
         if (!packageManager && !options.yes && template !== 'python') {
             const answers = await inquirer_1.default.prompt([
                 {
@@ -163,13 +167,13 @@ exports.initCommand = new commander_1.Command('init')
                     name: 'packageManager',
                     message: '选择包管理器:',
                     choices: PACKAGE_MANAGERS,
-                    default: 'npm',
+                    default: detectedPM || 'npm',
                 },
             ]);
             packageManager = answers.packageManager;
         }
         else if (!packageManager && template !== 'python') {
-            packageManager = 'npm';
+            packageManager = detectedPM || 'npm';
         }
         logger.info(`创建项目: ${chalk_1.default.cyan(projectName)}`);
         logger.info(`使用模板: ${chalk_1.default.cyan(template)}`);
@@ -185,8 +189,32 @@ exports.initCommand = new commander_1.Command('init')
         // 生成项目
         await generateProject(projectPath, projectName, template, packageManager);
         logger.success(`✨ 项目 ${chalk_1.default.cyan(projectName)} 创建成功！`);
+        // 可选：安装依赖
+        let didInstall = false;
+        if (options.install && template !== 'python') {
+            try {
+                await installDependencies(projectPath, packageManager);
+                didInstall = true;
+            }
+            catch (e) {
+                logger.warn('自动安装依赖失败，请手动安装');
+            }
+        }
+        // 可选：初始化Git
+        let didGitInit = false;
+        if (options.git) {
+            try {
+                await initGitRepo(projectPath);
+                didGitInit = true;
+            }
+            catch (e) {
+                logger.warn('Git初始化失败，请手动执行 git 命令');
+            }
+        }
+        // 创建项目README
+        await createProjectReadme(projectPath, projectName, template, packageManager);
         // 显示下一步操作
-        showNextSteps(projectName, packageManager, template);
+        showNextSteps(projectName, packageManager, template, didInstall, didGitInit);
     }
     catch (error) {
         logger.error('项目初始化失败:', error instanceof Error ? error : String(error));
@@ -264,12 +292,16 @@ async function copyCommonFiles(projectPath, template, packageManager) {
 async function processTemplateVariables(projectPath, projectName, template) {
     // 处理所有文件中的模板变量
     const files = await getFilesRecursively(projectPath);
+    // 从配置中获取作者与许可证信息
+    const { project: projectConfig } = configManager.getConfig();
     for (const file of files) {
         if (isTextFile(file)) {
             let content = await fs.readFile(file, 'utf-8');
             // 替换模板变量
             content = content.replace(/\{\{projectName\}\}/g, projectName);
             content = content.replace(/\{\{template\}\}/g, template);
+            content = content.replace(/\{\{author\}\}/g, projectConfig.author);
+            content = content.replace(/\{\{license\}\}/g, projectConfig.license);
             await fs.writeFile(file, content);
         }
     }
@@ -312,7 +344,7 @@ function isTextFile(filePath) {
     const ext = path.extname(filePath).toLowerCase();
     return textExtensions.includes(ext);
 }
-function showNextSteps(projectName, packageManager, template) {
+function showNextSteps(projectName, packageManager, template, didInstall = false, didGitInit = false) {
     logger.info('\n下一步操作:');
     logger.info(`  cd ${projectName}`);
     if (template === 'python') {
@@ -325,13 +357,121 @@ function showNextSteps(projectName, packageManager, template) {
     else if (packageManager) {
         const pm = PACKAGE_MANAGERS.find((p) => p.value === packageManager);
         if (pm) {
-            logger.info(`  ${pm.installCommand}`);
+            if (!didInstall) {
+                logger.info(`  ${pm.installCommand}`);
+            }
             logger.info(`  ${pm.runCommand} dev`);
         }
     }
     else {
-        logger.info('  npm install');
+        if (!didInstall) {
+            logger.info('  npm install');
+        }
         logger.info('  npm run dev');
+    }
+    if (!didGitInit) {
+        logger.info('  git init && git add -A && git commit -m "chore: init"');
+    }
+}
+function detectPackageManager() {
+    // 优先通过 npm user agent 检测
+    const ua = process.env.npm_config_user_agent || '';
+    if (ua.includes('pnpm'))
+        return 'pnpm';
+    if (ua.includes('yarn'))
+        return 'yarn';
+    if (ua.includes('bun'))
+        return 'bun';
+    // 回退：检测可执行命令
+    try {
+        (0, child_process_1.execSync)('pnpm -v', { stdio: 'ignore' });
+        return 'pnpm';
+    }
+    catch { }
+    try {
+        (0, child_process_1.execSync)('yarn -v', { stdio: 'ignore' });
+        return 'yarn';
+    }
+    catch { }
+    try {
+        (0, child_process_1.execSync)('bun -v', { stdio: 'ignore' });
+        return 'bun';
+    }
+    catch { }
+    try {
+        (0, child_process_1.execSync)('npm -v', { stdio: 'ignore' });
+        return 'npm';
+    }
+    catch { }
+    return undefined;
+}
+async function installDependencies(projectPath, packageManager) {
+    if (!packageManager)
+        packageManager = 'npm';
+    const pm = PACKAGE_MANAGERS.find((p) => p.value === packageManager);
+    const command = pm ? pm.installCommand : 'npm install';
+    logger.startSpinner('正在安装依赖...');
+    try {
+        (0, child_process_1.execSync)(command, { cwd: projectPath, stdio: 'inherit' });
+        logger.stopSpinner(true, '依赖安装完成');
+    }
+    catch (e) {
+        logger.stopSpinner(false, '依赖安装失败');
+        throw e;
+    }
+}
+async function initGitRepo(projectPath) {
+    logger.startSpinner('正在初始化Git仓库...');
+    try {
+        (0, child_process_1.execSync)('git init', { cwd: projectPath, stdio: 'inherit' });
+        (0, child_process_1.execSync)('git add -A', { cwd: projectPath, stdio: 'inherit' });
+        (0, child_process_1.execSync)('git commit -m "chore: init project"', {
+            cwd: projectPath,
+            stdio: 'inherit',
+        });
+        logger.stopSpinner(true, 'Git初始化完成');
+    }
+    catch (e) {
+        logger.stopSpinner(false, 'Git初始化失败');
+        throw e;
+    }
+}
+async function createProjectReadme(projectPath, projectName, template, packageManager) {
+    // 若模板已提供 README，则不覆盖
+    const readmePath = path.join(projectPath, 'README.md');
+    if (fs.existsSync(readmePath))
+        return;
+    const pm = PACKAGE_MANAGERS.find((p) => p.value === packageManager) || {
+        installCommand: 'npm install',
+        runCommand: 'npm run',
+    };
+    let content = `# ${projectName}\n\n` +
+        `使用 Prism-CLI 生成的项目（模板：${template}）。\n\n` +
+        `## 快速开始\n\n` +
+        `\`${pm.installCommand}\`\n\n`;
+    if (template === 'react-ts' || template === 'vue-ts') {
+        content += `开发：\`${pm.runCommand} dev\`\n` +
+            `构建：\`${pm.runCommand} build\`\n` +
+            `预览：\`${pm.runCommand} preview\`\n\n`;
+    }
+    else if (template === 'node-ts' || template === 'express-ts') {
+        content += `开发：\`${pm.runCommand} dev\`\n` +
+            `构建：\`${pm.runCommand} build\`\n` +
+            `运行：\`${pm.runCommand} start\`\n\n`;
+    }
+    else if (template === 'python') {
+        content += `创建虚拟环境：\`python -m venv venv\`\n` +
+            `Windows 激活：\`venv\\Scripts\\activate\`\n` +
+            `macOS/Linux 激活：\`source venv/bin/activate\`\n` +
+            `安装依赖：\`pip install -r requirements.txt\`\n` +
+            `运行：\`python src/main.py\`\n\n`;
+    }
+    content += `由 Prism-CLI 创建。`;
+    try {
+        await fs.writeFile(readmePath, content, 'utf-8');
+    }
+    catch (e) {
+        // 非关键步骤，写入失败时忽略
     }
 }
 //# sourceMappingURL=init.js.map

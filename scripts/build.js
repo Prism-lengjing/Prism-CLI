@@ -54,7 +54,12 @@ if (fs.existsSync(templatesDir)) {
   
   // Remove existing compiled template files
   if (fs.existsSync(distTemplatesDir)) {
-    fs.rmSync(distTemplatesDir, { recursive: true, force: true });
+    try {
+      fs.rmSync(distTemplatesDir, { recursive: true, force: true });
+    } catch (e) {
+      console.warn('[build] Warning: failed to clear dist/templates:', e && e.message ? e.message : e);
+      // Proceed without failing; copying will overwrite existing files
+    }
   }
   
   // Copy original template files

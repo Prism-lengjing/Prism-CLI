@@ -68,6 +68,17 @@ async function runTest() {
     execSync('npm install', { stdio: 'inherit', cwd: nodeDir });
     execSync('npm run build', { stdio: 'inherit', cwd: nodeDir });
 
+    // Test Express template
+    console.log(chalk.yellow('🧪 Testing Express template...'));
+    execSync(`node "${cliPath}" init test-express -t express-ts -p npm -y`, {
+      stdio: 'inherit',
+      cwd: testDir
+    });
+
+    const expressDir = path.join(testDir, 'test-express');
+    execSync('npm install', { stdio: 'inherit', cwd: expressDir });
+    execSync('npm run build', { stdio: 'inherit', cwd: expressDir });
+
     console.log(chalk.green('✅ All tests passed!'));
   } catch (error) {
     console.error(chalk.red('❌ Tests failed:'), error.message);
@@ -75,7 +86,16 @@ async function runTest() {
   } finally {
     // Clean up
     if (fs.existsSync(testDir)) {
-      fs.removeSync(testDir);
+      try {
+        fs.removeSync(testDir);
+      } catch (err) {
+        const msg = err && err.message ? String(err.message) : String(err);
+        if (msg.includes('EBUSY')) {
+          console.warn(chalk.yellow('⚠️  Cleanup skipped due to EBUSY; temporary files remain.'));
+        } else {
+          throw err;
+        }
+      }
     }
   }
 }
